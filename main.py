@@ -18,8 +18,7 @@ def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     btn_menu = types.KeyboardButton("Меню")
     btn_help = types.KeyboardButton("Помощь")
-    btn_about = types.KeyboardButton("Об авторе")
-    markup.add(btn_menu, btn_help, btn_about)
+    markup.add(btn_menu, btn_help)
 
     bot.send_message(chat_id,
                      text="Привет, {0.first_name}!\n"
@@ -141,10 +140,13 @@ def get_text_messages(message):
     text_low = msg_text.lower()
 
     if text_low == "меню" or text_low == "вернуться в меню":
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
         btn_dont_exist = types.KeyboardButton("Несуществующие вещи")
+        btn_facts = types.KeyboardButton("Факт о котах")
+        btn_help = types.KeyboardButton("Помощь")
+        btn_author = types.KeyboardButton("Об авторе")
         btn_start = types.KeyboardButton("/start")
-        markup.add(btn_dont_exist, btn_start)
+        markup.add(btn_dont_exist, btn_facts, btn_help, btn_author)
         bot.send_message(chat_id, text="Вы в меню", reply_markup=markup)
 
     elif text_low in ("помощь", "help"):
@@ -165,12 +167,21 @@ def get_text_messages(message):
                                                url="https://thisartworkdoesnotexist.com")
         inline.add(i_btn_cat, i_btn_person, i_btn_city, i_btn_waifu, i_btn_sky, i_btn_eye, i_btn_art)
         bot.send_message(message.chat.id, "Сайты «This X Does Not Exist»:", reply_markup=inline)
+        bot.send_message(message.chat.id, "Факты о котах:\nhttps://github.com/wh-iterabb-it/meowfacts")
 
     elif text_low == "об авторе":
         bot.send_message(chat_id, text="Уголок автора")
-
+        bot.send_message(chat_id, text="Данная функция доробатывается")
+    elif text_low == "факт о котах":
+        bot.send_message(chat_id, text=f"Факт о котах:\n{meow_fact()}")
     else:
         bot.send_message(chat_id, text="Ваше сообщение: " + msg_text)
+
+
+def meow_fact():
+    meow = requests.get('https://meowfacts.herokuapp.com/').json()
+    fact = meow["data"]
+    return fact[0]
 
 
 # --------------------
