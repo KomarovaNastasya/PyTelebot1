@@ -1,192 +1,241 @@
 import telebot
 from telebot import types
-import random
 import requests
-import bs4
-import io
-
-bot = telebot.TeleBot('5250359342:AAE4qvngPu5RiSbjFsl1Z_pTULiA-qW5puc')
-
+# import bs4
+# import io
+# import random
+from states import States
+import TXDNE
+import botgames
 
 # --------------------------------------------
+#
+# - Сделать проверку на ввод "Главное меню", "Меню" и других глобальных команд с других состояний в strange_msg
+# - Сделать проверку на другие инлайн клавиатуры в inline_keyboard, если в будущем такие будут
+# - 
+# --------------------------------------------
+
+TOKEN = None
+
+with open("token.txt") as f:
+    TOKEN = f.read().strip()
+
+bot = telebot.TeleBot(TOKEN)
+
+
+# ------------------------
 # Обработка команды /start
-# --------------------------------------------
+# ------------------------
 @bot.message_handler(commands=['start'])
 def start(message):
-    chat_id = message.chat.id
-
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-    btn_menu = types.KeyboardButton("Меню")
-    btn_help = types.KeyboardButton("Помощь")
-    markup.add(btn_menu, btn_help)
-
-    bot.send_message(chat_id,
-                     text="Привет, {0.first_name}!\n"
-                          "Я бот для курса программирования на языке Пайтон. "
-                          "Я умею присылать сгенерированные нейросетью картинки из различных категорий. \n\n"
-                          "Для подробностей отправьте слово «Помощь» или тапните на соответствующий пункт меню."
-                     .format(message.from_user), parse_mode='html', reply_markup=markup)
+    change_state(message)
 
 
-# ---------------------------------------
-# Получение сообщений
-# ---------------------------------------
-@bot.message_handler(func=lambda message: message.text.lower() in ("несуществующие вещи",
-                                                                   "котик 🐱", "котик", "кот", "🐱",
-                                                                   "человек 🧑🏼‍💼", "человек", "🧑🏼‍💼",
-                                                                   "город 🌆", "город", "🌆",
-                                                                   "вайфу 🧝🏻‍♀", "вайфу", "🧝🏻‍♀",
-                                                                   "картина 🖼", "картина", "🖼",
-                                                                   "небо 🌌", "небо", "🌌",
-                                                                   "глаз 👁", "глаз", "👁",
-                                                                   "случайная"))
-def this_x_does_not_exist(message):
+# -----------------------------------
+# Получение сообщения от пользователя
+# -----------------------------------
+@bot.message_handler(content_types=['text'])
+def main(message):
     chat_id = message.chat.id
     msg_text = message.text
+    msg_low = msg_text.lower()
 
-    text_low = msg_text.lower()
-    i = 0
-    rnd = ""
-    while i == 0:
-        if text_low == "несуществующие вещи":
-            i = 1
+    # --------------------
+    # Отсутствие состояния
+    # --------------------
+    if States.current_state_name is None:
+        message.text = "Главное меню"
+        change_state(message)
+        # chat_id = message.chat.id
+        # bot.send_message(chat_id, "Для начала работы со мной отправьте команду /start")
 
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-            btn_cat = types.KeyboardButton("Котик 🐱")
-            btn_person = types.KeyboardButton("Человек 🧑🏼‍💼")
-            btn_city = types.KeyboardButton("Город 🌆")
-            btn_waifu = types.KeyboardButton("Вайфу 🧝🏻‍♀")
-            btn_artwork = types.KeyboardButton("Картина 🖼")
-            btn_sky = types.KeyboardButton("Небо 🌌")
-            btn_eye = types.KeyboardButton("Глаз 👁")
-            btn_random = types.KeyboardButton("Случайная")
-            btn_menu = types.KeyboardButton("Вернуться в меню")
-            markup.add(btn_cat, btn_person, btn_city, btn_waifu, btn_artwork, btn_sky, btn_eye, btn_random, btn_menu)
+    # -----------------------------------------
+    # Обработка возврата в предыдущее состояние
+    # -----------------------------------------
+    elif msg_low == "вернуться":
+        change_state(message, back=True)
 
-            bot.send_message(chat_id, text="Вы в меню несуществующего\nВыберете категорию", reply_markup=markup)
+    # -----------------------
+    # Состояние главного меню
+    # -----------------------
+    elif States.current_state_name == "Главное меню":
 
-        elif text_low in ("котик 🐱", "котик", "кот", "🐱") or rnd == "Кот":
-            i = 1
-            req = requests.get('https://thiscatdoesnotexist.com')
-            bot.send_photo(message.chat.id, io.BytesIO(req.content), caption="Несуществующий котик")
+        if msg_low == "/start":
+            bot.send_message(chat_id,
+                             text="Привет, {0.first_name}!\n"
+                                  "Я бот для курса программирования на языке Пайтон. "
+                                  "Я умею присылать сгенерированные нейросетью картинки из различных категорий и "
+                                  "факты о котиках (на английском). \n\n"
+                                  "Для подробностей отправьте слово «Помощь» или тапните на соответствующий пункт меню."
+                             .format(message.from_user), reply_markup=States.current_state.markup)
 
-        elif text_low in ("человек 🧑🏼‍💼", "человек", "🧑🏼‍💼") or rnd == "Человек":
-            i = 1
-            req = requests.get('https://thispersondoesnotexist.com/image')
-            bot.send_photo(message.chat.id, io.BytesIO(req.content), caption="Несуществующий человек")
+        elif msg_low in ("главное меню", "меню"):
+            bot.send_message(chat_id, text="Вы в главном меню", reply_markup=States.current_state.markup)
 
-        elif text_low in ("картина 🖼", "картина", "🖼") or rnd == "Картина":
-            i = 1
-            req = requests.get('https://thisartworkdoesnotexist.com')
-            bot.send_photo(message.chat.id, io.BytesIO(req.content), caption="Несуществующая картина")
+        elif msg_low in ("картинки и факты", "игры"):
+            change_state(message)
 
-        elif text_low in ("небо 🌌", "небо", "🌌") or rnd == "Небо":
-            i = 1
-            rnd = random.randint(1, 5000)
-            if 1 <= rnd <= 9:
-                sky = f"000{rnd}"
-            elif 10 <= rnd <= 99:
-                sky = f"00{rnd}"
-            elif 100 <= rnd <= 999:
-                sky = f"0{rnd}"
-            else:
-                sky = f"{rnd}"
-            req = requests.get(
-                f"https://firebasestorage.googleapis.com/v0/b/thisnightskydoesnotexist.appspot.com/o"
-                f"/images%2Fseed{sky}.jpg?alt=media")
-            bot.send_photo(message.chat.id, io.BytesIO(req.content), caption=f"Несуществующее ночное небо\n(seed{sky})")
-
-        elif text_low in ("город 🌆", "город", "🌆") or rnd == "Город":
-            i = 1
-            req = requests.get('http://thiscitydoesnotexist.com')
-            soup = bs4.BeautifulSoup(req.text, "html.parser")
-            result = f"http://thiscitydoesnotexist.com" + soup.find("img").get("src")[1:]
-            city = requests.get(result)
-            bot.send_photo(message.chat.id, io.BytesIO(city.content), caption="Несуществующий город")
-
-        elif text_low in ("глаз 👁", "глаз", "👁") or rnd == "Глаз":
-            i = 1
-            req = requests.get('https://thiseyedoesnotexist.com/random/')
-            soup = bs4.BeautifulSoup(req.text, "html.parser")
-            result = f"https://thiseyedoesnotexist.com/" + soup.find("img").get("src")
-            eye = requests.get(result)
-            bot.send_photo(message.chat.id, io.BytesIO(eye.content), caption="Несуществующий глаз")
-
-        elif text_low in ("вайфу 🧝🏻‍♀", "вайфу", "🧝🏻‍♀") or rnd == "Вайфу":
-            i = 1
-            rnd = random.randint(1, 100000)
-            rnd_vers = random.randint(2, 3)
-            if rnd_vers == 3:
-                req = requests.get(f'https://www.thiswaifudoesnotexist.net/example-{rnd}.jpg')
-            else:
-                req = requests.get(f'https://www.thiswaifudoesnotexist.net/v2/example-{rnd}.jpg')
-            bot.send_photo(message.chat.id, io.BytesIO(req.content),
-                           caption=f"Несуществующая вайфу\n(v{rnd_vers} id{rnd})")
-
-        elif text_low == "случайная":
-            rnd_class = ["Кот", "Человек", "Вайфу", "Картина", "Город", "Небо", "Глаз"]
-            rnd = random.choice(rnd_class)
+        elif msg_low in ("помощь", "help", "/help"):
+            help_msg(chat_id)
 
         else:
-            i = 1
-            bot.send_message(chat_id, text="Пока такой функции нет")
-            get_text_messages(message)
+            strange_msg(message)
+
+    # --------------------------------------------
+    # Состояние выбора категории Картинок и фактов
+    # --------------------------------------------
+    elif States.current_state_name == "Картинки и факты":
+
+        if msg_low in ("картинки и факты",):
+            bot.send_message(chat_id, text="Вы в меню картинок и фактов", reply_markup=States.current_state.markup)
+
+        elif msg_low == "несуществующие вещи":
+            change_state(message)
+
+        elif msg_low == "факт о котах":
+            meow_fact = requests.get('https://meowfacts.herokuapp.com/').json()
+            bot.send_message(chat_id, text=f'Факт о котах:\n{meow_fact["data"][0]}')
+
+        elif msg_low in ("помощь", "help", "/help"):
+            help_msg(chat_id)
+
+        else:
+            strange_msg(message)
+
+    # --------------------------
+    # Состояние This X Does Not Exist
+    # --------------------------
+    elif States.current_state_name == "Несуществующие вещи":
+        if msg_low == "несуществующие вещи":
+            bot.send_message(chat_id, text="Выберете категорию несуществующего",
+                             reply_markup=States.current_state.markup)
+
+        elif msg_low in ("котик \U0001F431", "котик", "кот", "\U0001F431"):
+            TXDNE.cat(bot, chat_id)
+
+        elif msg_low in ("человек \U0001F9D1\U0001F3FC\U0000200D\U0001F4BC",
+                         "человек", "\U0001F9D1\U0001F3FC\U0000200D\U0001F4BC"):
+            TXDNE.person(bot, chat_id)
+
+        elif msg_low in ("вайфу \U0001F9DD\U0001F3FB\U0000200D\U00002640\U0000FE0F", "вайфу",
+                         "\U0001F9DD\U0001F3FB\U0000200D\U00002640\U0000FE0F"):
+            TXDNE.waifu(bot, chat_id)
+
+        elif msg_low in ("картина \U0001F5BC", "картина", "\U0001F5BC"):
+            TXDNE.art(bot, chat_id)
+
+        elif msg_low in ("город \U0001F306", "город", "\U0001F306"):
+            TXDNE.city(bot, chat_id)
+
+        elif msg_low in ("небо \U0001F30C", "небо", "\U0001F30C"):
+            TXDNE.sky(bot, chat_id)
+
+        elif msg_low in ("глаз \U0001F441", "глаз", "\U0001F441"):
+            TXDNE.eye(bot, chat_id)
+
+        elif msg_low == "случайная":
+            TXDNE.random_txdne(bot, chat_id)
+
+        else:
+            strange_msg(message)
+
+    # ----------------
+    # Меню выбора игры
+    # ----------------
+    elif States.current_state_name == "Игры":
+
+        if msg_low in ("игры",):
+            bot.send_message(chat_id, text="Вы в меню игр", reply_markup=States.current_state.markup)
+
+        elif msg_low in ("камень, ножницы, бумага", "rps"):
+            message.text = "Камень, ножницы, бумага"
+            change_state(message)
+
+        elif msg_low == "чёт-нечёт":
+            bot.send_message(chat_id, text="Данная функция пока не готова")
+
+        elif msg_low in ("помощь", "help", "/help"):
+            help_msg(chat_id)
+
+        else:
+            strange_msg(message)
+
+    # ---------------------------------
+    # Меню игры Камень, ножницы, бумага
+    # ---------------------------------
+    elif States.current_state_name == "Камень, ножницы, бумага":
+
+        if msg_low in ("камень, ножницы, бумага", "rps"):
+            bot.send_message(chat_id, text="Сыграем в «Камень, ножницы, бумагу»!",
+                             reply_markup=States.current_state.markup)
+
+        elif msg_low in ("камень \U0001FAA8", "ножницы \U00002702", "бумага \U0001F4C4",
+                         "камень", "\U0001FAA8", "ножницы", "\U00002702", "бумага", "\U0001F4C4"):
+            botgames.rps(bot, chat_id, msg_low)
+
+        else:
+            strange_msg(message)
 
 
-@bot.message_handler(content_types=['text'])
-def get_text_messages(message):
+def help_msg(chat_id):
+    bot.send_message(chat_id, "Сайты «This X Does Not Exist»:", reply_markup=inline_keyboard())
+    bot.send_message(chat_id, "Факты о котах:\nhttps://github.com/wh-iterabb-it/meowfacts")
+
+
+# --------------------------------------------------
+# Обработка смены состояния и перехода к предыдущему
+# --------------------------------------------------
+def change_state(message, back=False):
+    if back is True:
+        if States.current_state.parent.name is not None:
+            States.set_state(States.current_state.parent.name)
+            message.text = States.current_state_name
+        else:
+            return strange_msg(message)
+    else:
+        States.set_state(message.text)
+        if message.text.lower() in ("/start", "меню"):
+            States.set_state("Главное меню")
+    return main(message)
+
+
+# ------------------------------------------
+# Обработка сoобщений, неопределённых в меню
+# ------------------------------------------
+def strange_msg(message):
     chat_id = message.chat.id
     msg_text = message.text
-    text_low = msg_text.lower()
-
-    if text_low == "меню" or text_low == "вернуться в меню":
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        btn_dont_exist = types.KeyboardButton("Несуществующие вещи")
-        btn_facts = types.KeyboardButton("Факт о котах")
-        btn_help = types.KeyboardButton("Помощь")
-        btn_author = types.KeyboardButton("Об авторе")
-        btn_start = types.KeyboardButton("/start")
-        markup.add(btn_dont_exist, btn_facts, btn_help, btn_author)
-        bot.send_message(chat_id, text="Вы в меню", reply_markup=markup)
-
-    elif text_low in ("помощь", "help"):
-        inline = types.InlineKeyboardMarkup(row_width=1)
-        i_btn_cat = types.InlineKeyboardButton(text="This Cat Does Not Exist  🐱",
-                                               url="https://thiscatdoesnotexist.com")
-        i_btn_person = types.InlineKeyboardButton(text="This Person Does Not Exist 🧑🏼‍💼",
-                                                  url="https://thispersondoesnotexist.com")
-        i_btn_city = types.InlineKeyboardButton(text="This City Does Not Exist  🌆",
-                                                url="https://thiscitydoesnotexist.com")
-        i_btn_waifu = types.InlineKeyboardButton(text="This Waifu Does Not Exist  🧝🏻‍♀",
-                                                 url="https://thiswaifudoesnotexist.net")
-        i_btn_sky = types.InlineKeyboardButton(text="This Night Sky Does Not Exist  🌌",
-                                               url="https://arthurfindelair.com/thisnightskydoesnotexist")
-        i_btn_eye = types.InlineKeyboardButton(text="This Eye Does Not Exist  👁",
-                                               url="https://thiseyedoesnotexist.com/")
-        i_btn_art = types.InlineKeyboardButton(text="This Art Work Does Not Exist  🖼",
-                                               url="https://thisartworkdoesnotexist.com")
-        inline.add(i_btn_cat, i_btn_person, i_btn_city, i_btn_waifu, i_btn_sky, i_btn_eye, i_btn_art)
-        bot.send_message(message.chat.id, "Сайты «This X Does Not Exist»:", reply_markup=inline)
-        bot.send_message(message.chat.id, "Факты о котах:\nhttps://github.com/wh-iterabb-it/meowfacts")
-
-    elif text_low == "об авторе":
-        bot.send_message(chat_id, text="Уголок автора")
-        bot.send_message(chat_id, text="Данная функция доробатывается")
-    elif text_low == "факт о котах":
-        bot.send_message(chat_id, text=f"Факт о котах:\n{meow_fact()}")
+    msg_low = msg_text.lower()
+    if msg_low == "меню":
+        change_state(message)
     else:
-        bot.send_message(chat_id, text="Ваше сообщение: " + msg_text)
+        bot.send_message(chat_id, "К сожалению, я не понимаю ваше сообщение: " + msg_text +
+                         "\nЧтобы вернуться в главное меню отправьте «Меню»")
 
 
-def meow_fact():
-    meow = requests.get('https://meowfacts.herokuapp.com/').json()
-    fact = meow["data"]
-    return fact[0]
+def inline_keyboard():
+    # Сделать проверку на разные клавиатуры, если такие будут
+    buttons = [
+        types.InlineKeyboardButton(text="This Cat Does Not Exist \U0001F431", url="https://thiscatdoesnotexist.com"),
+        types.InlineKeyboardButton(text="This Person Does Not Exist \U0001F9D1\U0001F3FC\U0000200D\U0001F4BC",
+                                   url="https://thispersondoesnotexist.com"),
+        types.InlineKeyboardButton(text="This Waifu Does Not Exist  \U0001F9DD\U0001F3FB\U0000200D\U00002640\U0000FE0F",
+                                   url="https://thiswaifudoesnotexist.net"),
+        types.InlineKeyboardButton(text="This Art Work Does Not Exist  \U0001F5BC",
+                                   url="https://thisartworkdoesnotexist.com"),
+        types.InlineKeyboardButton(text="This City Does Not Exist  \U0001F306", url="https://thiscitydoesnotexist.com"),
+        types.InlineKeyboardButton(text="This Night Sky Does Not Exist  \U0001F30C",
+                                   url="https://arthurfindelair.com/thisnightskydoesnotexist"),
+        types.InlineKeyboardButton(text="This Eye Does Not Exist  \U0001F441", url="https://thiseyedoesnotexist.com/")
+    ]
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    keyboard.add(*buttons)
+    return keyboard
 
 
-# --------------------
+# -----------
 # Запуск бота
-# --------------------
+# -----------
 bot.polling(none_stop=True, interval=0)
 
 print()
