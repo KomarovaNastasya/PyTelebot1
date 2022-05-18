@@ -48,7 +48,7 @@ def art(bot, chat_id):
 def city(bot, chat_id):
     req = requests.get('http://thiscitydoesnotexist.com')
     soup = bs4.BeautifulSoup(req.text, "html.parser")
-    result = f"http://thiscitydoesnotexist.com" + soup.find("img").get("src")[1:]
+    result = "http://thiscitydoesnotexist.com" + soup.find("img").get("src")[1:]
     res = requests.get(result)
     bot.send_photo(chat_id, io.BytesIO(res.content), caption="Несуществующий город")
 
@@ -78,7 +78,7 @@ def sky(bot, chat_id):
 def eye(bot, chat_id):
     req = requests.get('https://thiseyedoesnotexist.com/random/')
     soup = bs4.BeautifulSoup(req.text, "html.parser")
-    result = f"https://thiseyedoesnotexist.com/" + soup.find("img").get("src")
+    result = "https://thiseyedoesnotexist.com/" + soup.find("img").get("src")
     res = requests.get(result)
     bot.send_photo(chat_id, io.BytesIO(res.content), caption="Несуществующий глаз")
     
@@ -99,3 +99,30 @@ def random_txdne(bot, chat_id):
     rnd_choice = random.choice(list(rnd_class.keys()))
     rnd = rnd_class[rnd_choice]
     return rnd(bot, chat_id)
+
+
+# -------------
+# Факты о котах
+# -------------
+def meow_fact(bot, chat_id):
+    meow = requests.get('https://cat-fact.herokuapp.com/facts/random?animal_type=cat&amount=1').json()
+    bot.send_message(chat_id, text=f'Факт о котах:\n{meow["text"]}')
+    
+
+# --------------------
+# ******** ***** совет
+# --------------------
+def advice(bot, chat_id):
+    ad = requests.get('http://fucking-great-advice.ru/api/random').json()
+    bot.send_message(chat_id, text=f'Совет:\n{ad["text"]}')
+
+
+# -----------------------------------
+# Цитаты на испанском с Викицитатника
+# -----------------------------------
+def cita(bot, chat_id):
+    req = requests.get("https://es.wikiquote.org/wiki/Especial:Aleatoria")
+    soup = bs4.BeautifulSoup(req.text, "html.parser")
+    res = soup.find("div", class_="mw-parser-output").find("ul", recursive=False).find_all("li")[0].get_text()
+    res = res.replace('[1]', '').replace('[2]', '').replace('[3]', '')
+    bot.send_message(chat_id, text=f'Цитата:\n{res}')
