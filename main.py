@@ -1,11 +1,11 @@
 import telebot
 from telebot import types
-import requests
+# import requests
 # import bs4
 # import io
 # import random
 from states import States
-import TXDNE
+import PicsAndText
 import botgames
 
 # --------------------------------------------
@@ -44,10 +44,10 @@ def main(message):
     # Отсутствие состояния
     # --------------------
     if States.current_state_name is None:
-        message.text = "Главное меню"
-        change_state(message)
-        # chat_id = message.chat.id
-        # bot.send_message(chat_id, "Для начала работы со мной отправьте команду /start")
+        # message.text = "Главное меню"
+        # change_state(message)
+        chat_id = message.chat.id
+        bot.send_message(chat_id, "Для начала работы со мной отправьте команду /start")
 
     # -----------------------------------------
     # Обработка возврата в предыдущее состояние
@@ -63,16 +63,17 @@ def main(message):
         if msg_low == "/start":
             bot.send_message(chat_id,
                              text="Привет, {0.first_name}!\n"
-                                  "Я бот для курса программирования на языке Пайтон. "
-                                  "Я умею присылать сгенерированные нейросетью картинки из различных категорий и "
-                                  "факты о котиках (на английском). \n\n"
+                                  "Я бот для курса программирования на языке Пайтон.\n "
+                                  "Я умею присылать сгенерированные нейросетью картинки из различных категорий, "
+                                  "факты о котиках (на английском), цитаты (на испанском), советы (на матерном).\n"
+                                  "А также мы можем сыграть в камень-ножницы-бумагу.\n\n"
                                   "Для подробностей отправьте слово «Помощь» или тапните на соответствующий пункт меню."
                              .format(message.from_user), reply_markup=States.current_state.markup)
 
         elif msg_low in ("главное меню", "меню"):
             bot.send_message(chat_id, text="Вы в главном меню", reply_markup=States.current_state.markup)
 
-        elif msg_low in ("картинки и факты", "игры"):
+        elif msg_low in ("картинки и факты", "камень, ножницы, бумага"):
             change_state(message)
 
         elif msg_low in ("помощь", "help", "/help"):
@@ -92,10 +93,19 @@ def main(message):
         elif msg_low == "несуществующие вещи":
             change_state(message)
 
-        elif msg_low == "факт о котах":
-            meow_fact = requests.get('https://meowfacts.herokuapp.com/').json()
-            bot.send_message(chat_id, text=f'Факт о котах:\n{meow_fact["data"][0]}')
+# ! Для работы в pythonanywhere
+# !       elif msg_low == "несуществующее небо":
+# !           PicsAndText.sky(bot, chat_id)
 
+        elif msg_low == "факт о котах":
+            PicsAndText.meow_fact(bot, chat_id)
+            
+        elif msg_low == "совет":
+            PicsAndText.advice(bot, chat_id)
+            
+        elif msg_low == "цитата":
+            PicsAndText.cita(bot, chat_id)
+            
         elif msg_low in ("помощь", "help", "/help"):
             help_msg(chat_id)
 
@@ -111,57 +121,36 @@ def main(message):
                              reply_markup=States.current_state.markup)
 
         elif msg_low in ("котик \U0001F431", "котик", "кот", "\U0001F431"):
-            TXDNE.cat(bot, chat_id)
+            PicsAndText.cat(bot, chat_id)
 
         elif msg_low in ("человек \U0001F9D1\U0001F3FC\U0000200D\U0001F4BC",
                          "человек", "\U0001F9D1\U0001F3FC\U0000200D\U0001F4BC"):
-            TXDNE.person(bot, chat_id)
+            PicsAndText.person(bot, chat_id)
 
         elif msg_low in ("вайфу \U0001F9DD\U0001F3FB\U0000200D\U00002640\U0000FE0F", "вайфу",
                          "\U0001F9DD\U0001F3FB\U0000200D\U00002640\U0000FE0F"):
-            TXDNE.waifu(bot, chat_id)
+            PicsAndText.waifu(bot, chat_id)
 
         elif msg_low in ("картина \U0001F5BC", "картина", "\U0001F5BC"):
-            TXDNE.art(bot, chat_id)
+            PicsAndText.art(bot, chat_id)
 
         elif msg_low in ("город \U0001F306", "город", "\U0001F306"):
-            TXDNE.city(bot, chat_id)
+            PicsAndText.city(bot, chat_id)
 
         elif msg_low in ("небо \U0001F30C", "небо", "\U0001F30C"):
-            TXDNE.sky(bot, chat_id)
+            PicsAndText.sky(bot, chat_id)
 
         elif msg_low in ("глаз \U0001F441", "глаз", "\U0001F441"):
-            TXDNE.eye(bot, chat_id)
+            PicsAndText.eye(bot, chat_id)
 
         elif msg_low == "случайная":
-            TXDNE.random_txdne(bot, chat_id)
-
-        else:
-            strange_msg(message)
-
-    # ----------------
-    # Меню выбора игры
-    # ----------------
-    elif States.current_state_name == "Игры":
-
-        if msg_low in ("игры",):
-            bot.send_message(chat_id, text="Вы в меню игр", reply_markup=States.current_state.markup)
-
-        elif msg_low in ("камень, ножницы, бумага", "rps"):
-            message.text = "Камень, ножницы, бумага"
-            change_state(message)
-
-        elif msg_low == "чёт-нечёт":
-            bot.send_message(chat_id, text="Данная функция пока не готова")
-
-        elif msg_low in ("помощь", "help", "/help"):
-            help_msg(chat_id)
+            PicsAndText.random_txdne(bot, chat_id)
 
         else:
             strange_msg(message)
 
     # ---------------------------------
-    # Меню игры Камень, ножницы, бумага
+    # Состояние игры Камень, ножницы, бумага
     # ---------------------------------
     elif States.current_state_name == "Камень, ножницы, бумага":
 
@@ -178,8 +167,7 @@ def main(message):
 
 
 def help_msg(chat_id):
-    bot.send_message(chat_id, "Сайты «This X Does Not Exist»:", reply_markup=inline_keyboard())
-    bot.send_message(chat_id, "Факты о котах:\nhttps://github.com/wh-iterabb-it/meowfacts")
+    bot.send_message(chat_id, "Использованные сайты:", reply_markup=inline_keyboard())
 
 
 # --------------------------------------------------
@@ -226,7 +214,10 @@ def inline_keyboard():
         types.InlineKeyboardButton(text="This City Does Not Exist  \U0001F306", url="https://thiscitydoesnotexist.com"),
         types.InlineKeyboardButton(text="This Night Sky Does Not Exist  \U0001F30C",
                                    url="https://arthurfindelair.com/thisnightskydoesnotexist"),
-        types.InlineKeyboardButton(text="This Eye Does Not Exist  \U0001F441", url="https://thiseyedoesnotexist.com/")
+        types.InlineKeyboardButton(text="This Eye Does Not Exist  \U0001F441", url="https://thiseyedoesnotexist.com/"),
+        types.InlineKeyboardButton(text="Факты о котах", url="https://github.com/alexwohlbruck/cat-facts"),
+        types.InlineKeyboardButton(text="Цитаты из Викицитатника", url="https://es.wikiquote.org/wiki"),
+        types.InlineKeyboardButton(text="Чертовски великолепный совет", url="https://fucking-great-advice.ru")
     ]
     keyboard = types.InlineKeyboardMarkup(row_width=1)
     keyboard.add(*buttons)
