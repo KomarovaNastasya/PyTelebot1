@@ -26,10 +26,14 @@ class States:
         return state
 
 
-state_main = States("Главное меню", buttons=["Картинки и факты", "Игры", "Помощь"], parent=None, row=2)
+state_main = States("Главное меню", buttons=["Картинки и текст", "Камень, ножницы, бумага", "Помощь"], parent=None, row=2)
 
-state_choice = States("Картинки и факты", buttons=["Несуществующие вещи", "Факт о котах", "Помощь",
+state_choice = States("Картинки и текст", buttons=["Несуществующие вещи", "Факт о котах", "Цитата", "Совет", "Помощь",
                                                    "Вернуться"], parent=state_main, row=2)
+# ! Для работы в pythonanywhere
+# ! state_choice = States("Картинки и текст", buttons=["Несуществующее небо", "Факт о котах", "Цитата", "Совет", "Помощь",
+# !                                                    "Вернуться"], parent=state_main, row=2)    
+
 state_does_not_exist = States("Несуществующие вещи", buttons=["Котик \U0001F431",
                                                               "Человек \U0001F9D1\U0001F3FC\U0000200D\U0001F4BC",
                                                               "Вайфу \U0001F9DD\U0001F3FB\U0000200D\U00002640\U0000FE0F",
@@ -37,6 +41,5 @@ state_does_not_exist = States("Несуществующие вещи", buttons=[
                                                               "Небо \U0001F30C", "Глаз \U0001F441", "Случайная",
                                                               "Вернуться"], parent=state_choice)
 
-state_games = States("Игры", buttons=["Камень, ножницы, бумага", "Чёт-нечёт", "Вернуться"], parent=state_main, row=2)
 state_rps = States("Камень, ножницы, бумага", buttons=["Камень \U0001FAA8", "Ножницы \U00002702", "Бумага \U0001F4C4",
-                                                       "Вернуться"], parent=state_games, row=2)
+                                                       "Вернуться"], parent=state_main, row=2)
