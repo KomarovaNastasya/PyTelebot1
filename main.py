@@ -63,7 +63,7 @@ def main(message):
         if msg_low == "/start":
             bot.send_message(chat_id,
                              text="Привет, {0.first_name}!\n"
-                                  "Я бот для курса программирования на языке Пайтон.\n "
+                                  "Я бот для курса программирования на языке Пайтон.\n"
                                   "Я умею присылать сгенерированные нейросетью картинки из различных категорий, "
                                   "факты о котиках (на английском), цитаты (на испанском), советы (на матерном).\n"
                                   "А также мы можем сыграть в камень-ножницы-бумагу.\n\n"
@@ -73,7 +73,7 @@ def main(message):
         elif msg_low in ("главное меню", "меню"):
             bot.send_message(chat_id, text="Вы в главном меню", reply_markup=States.current_state.markup)
 
-        elif msg_low in ("картинки и факты", "камень, ножницы, бумага"):
+        elif msg_low in ("картинки и текст", "камень, ножницы, бумага"):
             change_state(message)
 
         elif msg_low in ("помощь", "help", "/help"):
@@ -85,10 +85,10 @@ def main(message):
     # --------------------------------------------
     # Состояние выбора категории Картинок и фактов
     # --------------------------------------------
-    elif States.current_state_name == "Картинки и факты":
+    elif States.current_state_name == "Картинки и текст":
 
-        if msg_low in ("картинки и факты",):
-            bot.send_message(chat_id, text="Вы в меню картинок и фактов", reply_markup=States.current_state.markup)
+        if msg_low in ("картинки и текст",):
+            bot.send_message(chat_id, text="Вы в меню картинок, фактов, цитат и советов", reply_markup=States.current_state.markup)
 
         elif msg_low == "несуществующие вещи":
             change_state(message)
